@@ -1,23 +1,44 @@
 const cheerio = require('cheerio');
-const fetch = require('node-fetch');
+const axios = require('axios');
 
 var url = 'https://news.ycombinator.com/';
 
-const scrapeTarget = async (url) => {
+axios.get(url).then((res) => {
+    const items = [];
+    const $ = cheerio.load(res.data);
 
-    const res = await fetch(url);
-    const html = await res.text();
-    const $ = cheerio.load(html);
+    $('.athing').each( (index, element) => {
+        const id = $(element)
+            .find('a')
+            .attr('id')
+            .match(/(\d+)/)[0];
+        
+        const title = $(element)
+            .find('.storylink')
+            .text();
 
-    return $('.athing').map(function(i,el) {
-        // return $(this).html();
-        return {
-            id: $(this).find('a').attr('id'),
-            title: $(this).find('.storylink').text(),
-            source: $(this).find('.sitestr').text(),
-            url: $(this).find('.storylink').attr('href')
-        }
-    }).get();
-}
+        const source = $(element)
+            .find('.sitestr')
+            .text();
 
-scrapeTarget(url).then(result => console.log(result));
+        const url = $(element)
+            .find('.storylink')
+            .attr('href');
+
+        const scoreText = $(element)
+            .next('tr')
+            .find('.score')
+            .text();
+
+        const ageText = $(element)
+            .next('tr')
+            .find('.age')
+            .children('a')
+            .text();
+        
+        items.push({ id, title, source, url, scoreText, ageText });
+    
+    });
+
+    console.log(items);
+});
